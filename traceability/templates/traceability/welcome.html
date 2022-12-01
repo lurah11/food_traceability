@@ -1,0 +1,39 @@
+{% extends 'traceability/base.html' %}
+
+{% block title %}HCI Traceability Simulation{% endblock title %}
+
+{% block content %}
+  <p>Here are the available Traceability Simulation :</p>
+ {% if np is True %}
+  <p>No data available</p>
+ {% else %}
+   <table class="table table-sm">
+    <thead>
+      <tr>
+        <td>No</td>
+        <td>Name</td>
+        <td>Volume</td>
+        <td>cycle begin</td>
+        <td>cycle end</td>
+        <td>traceability date</td>
+        <td>Result</td>
+        <td>Detail</td>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in trace_list %}
+      <tr>
+        <td>{{forloop.counter}}</td>
+        <td>{{t.name}}</td>
+        <td>{{t.volume}}</td>
+        <td>{{t.cycle_begin}}</td>
+        <td>{{t.cycle_end}}</td>
+        <td>{{t.traceability_date}}</td>
+        <td>{{t.result}}</td>
+        <td><a href="{% url 'traceability:trace-detail-view' t.id %}">Detail</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+{% endblock content %}

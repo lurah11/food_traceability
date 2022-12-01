@@ -1,0 +1,168 @@
+{% extends 'traceability/base_report.html' %}
+
+{% block title %}Traceability Simulation Report in HTML{% endblock title %}
+
+{% block content %}
+{% load minutes %}
+  <div style="" class="">
+    <p style="text-align:right;font-size:12px"> Printed by {{emp.user.username}} on {{print_time}}</p>
+    <h1 style="display:inline-block">HCIS TRACEABILITY SIMULATION REPORT </h1>
+  </div>
+
+  <hr style="border:2px solid">
+  <h4>Part 1. General Information </h4>
+  <table>
+    <tr>
+      <td>Product Name:</td>
+      <td>{% if allowed %}{{product.name}}{% else %}Confidential{% endif %}</td>
+    </tr>
+    <tr>
+      <td>Customer:</td>
+      <td>{% if allowed %}{{product.customer}}{% else %}Confidential{% endif %}</td>
+    </tr>
+    <tr>
+      <td>Volume (mL):</td>
+      <td>{{product.volume}}</td>
+    </tr>
+    <tr>
+      <td>Cycle Begin:</td>
+      <td>{{product.cycle_begin}}</td>
+    </tr>
+    <tr>
+      <td>Cycle End:</td>
+      <td>{{product.cycle_end}}</td>
+    </tr>
+    <tr>
+      <td>Traceability Date:</td>
+      <td>{{product.traceability_date}}</td>
+    </tr>
+    </table>
+    <hr style="border:1px solid">
+    <h4>Part 2. Finished Good Stock Information </h4>
+    <table>
+      <tr>
+        <td>Produced Qty(Boxes):</td>
+        <td>{{product.qty_produced}}</td>
+      </tr>
+      <tr>
+        <td>On Hold Qty(Boxes):</td>
+        <td>{{product.qty_onhold}}</td>
+      </tr>
+      <tr>
+        <td>Released Qty(Boxes):</td>
+        <td>{{product.qty_released}}</td>
+      </tr>
+      <tr>
+        <td> Delivered Qty(Boxes):</td>
+        <td>{{product.qty_delivered}}</td>
+      </tr>
+      <tr>
+        <td> Actual Stored Qty(Boxes):</td>
+        <td>{{product.qty_stored}}</td>
+      </tr>
+      <tr>
+        <td> Difference in Qty(Boxes):</td>
+        <td>{{product.qty_diff}}</td>
+      </tr>
+    </table>
+    <hr style="border:1px solid">
+    <h4>Part 3. Raw Material Information </h4>
+    <table class="table table-sm table-bordered w-auto" style="font-size:13px">
+      <thead>
+        <tr>
+          <td>No</td>
+          <td>Type</td>
+          <td>Code</td>
+          <td>Batch No</td>
+          <td>Prd Date</td>
+          <td>Exp Date</td>
+          <td>Qty</td>
+          <td>QC FS Check</td>
+          <td>QC Halal Check</td>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in raw_material_list %}
+        <tr>
+          <td>{{forloop.counter}}</td>
+          <td>{{r.type}}</td>
+          <td>{% if allowed %}{{r.code}}{% else %}Conf.{% endif %}</td>
+          <td>{{r.batch_no}}</td>
+          <td>{{r.prod_date}}</td>
+          <td>{{r.exp_date}}</td>
+          <td>{{r.qty}}</td>
+          <td>{{r.qc_fs}}</td>
+          <td>{{r.qc_halal}}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      </table>
+      <hr style="border:1px solid">
+      <h4>Part 4. Finished Good Delivery Information </h4>
+      <table class="table table-sm table-bordered w-auto" style="font-size:13px">
+        <thead>
+          <tr>
+            <td>No</td>
+            <td>Do Number</td>
+            <td>Date</td>
+            <td>Receiver</td>
+            <td>Destination</td>
+            <td>Address</td>
+            <td>Quantity</td>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in product_delivery_list %}
+          <tr>
+            <td>{{forloop.counter}}</td>
+            <td>{{r.shipment_no}}</td>
+            <td>{{r.date}}</td>
+            <td>{% if allowed %}{{r.receiver}}{% else %}Conf.{% endif %}</td>
+            <td>{% if allowed %}{{r.destination}}{% else %}Conf.{% endif %}</td>
+            <td>{% if allowed %}{{r.address}}{% else %}Conf.{% endif %}</td>
+            <td>{{r.qty}}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        </table>
+        <hr style="border:1px solid">
+        <h4>Part 5. Traceability Duration </h4>
+        <table>
+        <tr>
+          <td>Warehouse Duration:  <td>
+          <td>{{product.wh_duration|minutes|floatformat:0}} minutes</td>
+        </tr>
+        <tr>
+          <td>Production Duration:  <td>
+          <td>{{product.pd_duration|minutes|floatformat:0}} minutes</td>
+        </tr>
+        <tr>
+          <td>QC Duration:  <td>
+          <td>{{product.qc_duration|minutes|floatformat:0}} minutes</td>
+        </tr>
+        <tr>
+          <td style="color:blue">Total Duration + Report Making:  <td>
+          <td style="color:blue">{{product.duration|minutes|floatformat:0}} minutes</td>
+        </tr>
+        </table>
+        <hr style="border:1px solid">
+        <h4>Part 6. Conclusion </h4>
+        <table>
+          <tr>
+            <td>Result:  <td>
+          </tr>
+          <tr>
+            <td style="{% if product.result == 'Failed' %}color:red{% else %}color:blue{% endif %}">{{product.result}}</td>
+          </tr>
+          <tr>
+            <td>Explanation of Result :   <td>
+          </tr>
+          <tr>
+            <td style="color:blue">{{product.summary|linebreaks}}</td>
+          </tr>
+        </table>
+        <p style="font-size:10">######This is computer generated document and valid without sign######</p>
+
+
+
+{% endblock content %}

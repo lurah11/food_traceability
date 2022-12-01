@@ -1,0 +1,594 @@
+{% extends 'traceability/base.html' %}
+
+{% block title %}HCI Traceability Simulation{% endblock title %}
+
+{% block content %}
+{% load filename %}
+  <div style="text-align:right"class="">
+    <a style="border:solid;background-color:yellow" href="" onclick="add_row(event)">Add Data</a>
+  </div>
+  <script type="text/javascript">
+    {% if emp.dept == 'production' %}
+    window.onload = function() {
+      $.ajax({
+        type:'GET',
+        url:'{% url "traceability:check-traceability-start-view" product_id %}',
+        success:function(response){
+          if (response['prd_submit'] === true) {
+            alert("the data has been submited :D")
+            document.getElementById('stop_timer_prd_button').disabled = true
+            $.ajax({
+              type:'GET',
+              url : '{% url "traceability:update-duration-view" product_id %}',
+              success: function(response){
+                let timer = document.getElementById('prd_timer')
+                let duration = parseInt(response['prd_duration'])
+                duration_in_min = duration/60
+                timer.innerHTML = duration_in_min
+              },
+              error: function(response){
+                console.log(response)
+              }
+            })
+          }
+          else {
+            let prdtimerfunc = window.setInterval(()=>{
+                $.ajax({
+                  type:'GET',
+                  url : '{% url "traceability:update-duration-view" product_id %}',
+                  success:function(response){
+                    let timer = document.getElementById('prd_timer')
+                    let duration = parseInt(response['total_duration'])
+                    duration_in_min = duration/60
+                    timer.innerHTML = duration_in_min
+                },
+                error: function(response){
+                  console.log(response);
+                }})
+                $.ajax({
+                  type:'GET',
+                  url:'{% url "traceability:check-traceability-start-view" product_id %}',
+                  success:function(response){
+                    if (response['status']===false) {
+                      clearInterval(window.prdtimerfunc)
+                      alert('QA has ended the traceability')
+                      window.location.href = '{% url "traceability:welcome-view" %}'
+                    }
+
+                  }
+                })
+            },10000)
+          }
+        }
+      })
+    }
+
+    {% elif emp.dept == 'qc' %}
+    window.onload = function() {
+      $.ajax({
+        type:'GET',
+        url:'{% url "traceability:check-traceability-start-view" product_id %}',
+        success:function(response){
+          if (response['qc_submit'] === true) {
+            alert("the data has been submited :D")
+            document.getElementById('stop_timer_qc_button').disabled = true
+            $.ajax({
+              type:'GET',
+              url : '{% url "traceability:update-duration-view" product_id %}',
+              success: function(response){
+                let timer = document.getElementById('qc_timer')
+                let duration = parseInt(response['qc_duration'])
+                duration_in_min = duration/60
+                timer.innerHTML = duration_in_min
+              },
+              error: function(response){
+                console.log(response)
+              }
+            })
+          }
+          else {
+            let qctimerfunc = window.setInterval(()=>{
+                $.ajax({
+                  type:'GET',
+                  url : '{% url "traceability:update-duration-view" product_id %}',
+                  success:function(response){
+                    let timer = document.getElementById('qc_timer')
+                    let duration = parseInt(response['total_duration'])
+                    duration_in_min = duration/60
+                    timer.innerHTML = duration_in_min
+                },
+                error: function(response){
+                  console.log(response);
+                }})
+                $.ajax({
+                  type:'GET',
+                  url:'{% url "traceability:check-traceability-start-view" product_id %}',
+                  success:function(response){
+                    if (response['status']===false) {
+                      clearInterval(window.qctimerfunc)
+                      alert('QA has ended the traceability')
+                      window.location.href = '{% url "traceability:welcome-view" %}'
+                    }
+
+                  }
+                })
+            },10000)
+          }
+        }
+      })
+    }
+    {% endif %}
+  </script>
+  <script type="text/javascript">
+    {% if emp.dept == 'production' %}
+    function stop_timer_prd(e) {
+      e.target.disabled=true;
+      let data = {
+        'csrfmiddlewaretoken':'{{csrf_token}}',
+        'prd_submit':'prd_submit'
+      }
+      $.ajax({
+        type:'POST',
+        url:'{% url "traceability:update-duration-view" product_id %}',
+        data:data,
+        success:function(response){
+          let timer = document.getElementById('prd_timer')
+          let duration = parseInt(response['prd_duration'])
+          duration_in_min = duration/60
+          timer.innerHTML = duration_in_min
+        }
+      });
+      $.ajax({
+        type:'POST',
+        url :'{% url "traceability:check-traceability-start-view" product_id %}',
+        data : data,
+        success:function(response){
+          alert("prd traceability has finished, redirected to home page")
+          window.location.href = '{% url "traceability:welcome-view" %}'
+        }
+      })
+    }
+    {% elif emp.dept == 'qc' %}
+    function stop_timer_qc(e) {
+      e.target.disabled=true;
+      let data = {
+        'csrfmiddlewaretoken':'{{csrf_token}}',
+        'qc_submit':'qc_submit'
+      }
+      $.ajax({
+        type:'POST',
+        url:'{% url "traceability:update-duration-view" product_id %}',
+        data:data,
+        success:function(response){
+          let timer = document.getElementById('qc_timer')
+          let duration = parseInt(response['qc_duration'])
+          duration_in_min = duration/60
+          timer.innerHTML = duration_in_min
+        }
+      });
+      $.ajax({
+        type:'POST',
+        url :'{% url "traceability:check-traceability-start-view" product_id %}',
+        data : data,
+        success:function(response){
+          alert("qc traceability has finished, redirected to home page")
+          window.location.href = '{% url "traceability:welcome-view" %}'
+        }
+      })
+    }
+    {% endif %}
+  //   storage = window.localStorage;
+  //   {% if emp.dept == "production" %}
+  //   window.onload = function() {
+  //     $.ajax({
+  //       type:'GET',
+  //       url:'{% url "traceability:check-traceability-start-view" product_id %}',
+  //       success:function(response){
+  //         if (response['prd_submit'] === true) {
+  //           alert("the data has been submited, redirecting you to the homepage")
+  //           window.location.href = '{% url "traceability:welcome-view" %}'
+  //         }
+  //       }
+  //     })
+  //     if (storage.getItem('stopped')==='yes') {
+  //       storage.setItem("timer_prd",0)
+  //       storage.removeItem("stopped")
+  //     }
+  //     const timer = document.getElementById('prd_timer')
+  //     if (storage.getItem("timer_prd")===null) {
+  //       let time_now = 0 ;
+  //       timer.innerHTML = time_now;
+  //       storage.setItem("timer_prd",time_now)
+  //     }
+  //     else {
+  //       let time_now = parseInt(storage.getItem("timer_prd"))
+  //     }
+  //     curr_time = parseInt(storage.getItem("timer_prd"));
+  //
+  //     let timerfunc = setInterval(()=>{
+  //       curr_time += 1;
+  //       let curr_time_min = parseInt(curr_time/60) ;
+  //       if (curr_time % 10 === 0) {
+  //        curr_time_min = curr_time/10
+  //        let prd_duration = curr_time_min
+  //        let data = {
+  //          'csrfmiddlewaretoken':'{{csrf_token}}',
+  //          'prd_duration':prd_duration
+  //        }
+  //        $.ajax({
+  //          type:'POST',
+  //          url:'{% url "traceability:update-duration-view" product_id %}',
+  //          data:data,
+  //        })
+  //        $.ajax({
+  //          type:'GET',
+  //          url:'{% url "traceability:check-traceability-start-view" product_id %}',
+  //          success:function(response){
+  //            if (response['status']===false) {
+  //              alert('QA has ended the traceability')
+  //              window.location.href = '{% url "traceability:welcome-view" %}'
+  //            }
+  //
+  //          }
+  //        })
+  //       }
+  //       timer.innerHTML = curr_time;
+  //     },1000)
+  //     return [curr_time, timerfunc]
+  //   };
+  //
+  //   curr_time = window.onload[0];
+  //   timerfunc = window.onload[1];
+  //
+  //   window.onbeforeunload = function() {
+  //     storage.setItem("timer_prd",curr_time)
+  //   }
+  //   {% elif emp.dept == "qc" %}
+  //   window.onload = function() {
+  //     $.ajax({
+  //       type:'GET',
+  //       url:'{% url "traceability:check-traceability-start-view" product_id %}',
+  //       success:function(response){
+  //         if (response['qc_submit'] === true) {
+  //           alert("the data has been submited, redirecting you to the homepage")
+  //           window.location.href = '{% url "traceability:welcome-view" %}'
+  //         }
+  //       }
+  //     })
+  //     if (storage.getItem('stopped')==='yes') {
+  //       storage.setItem("timer_qc",0)
+  //       storage.removeItem("stopped")
+  //     }
+  //     const timer = document.getElementById('qc_timer')
+  //     if (storage.getItem("timer_qc")===null) {
+  //       let time_now = 0 ;
+  //       timer.innerHTML = time_now;
+  //       storage.setItem("timer_qc",time_now)
+  //     }
+  //     else {
+  //       let time_now = parseInt(storage.getItem("timer_qc"))
+  //     }
+  //     curr_time = parseInt(storage.getItem("timer_qc"));
+  //
+  //     let timerfunc = setInterval(()=>{
+  //       curr_time += 1;
+  //       let curr_time_min = parseInt(curr_time/60) ;
+  //       if (curr_time % 10 === 0) {
+  //        curr_time_min = curr_time/10
+  //        let qc_duration = curr_time_min
+  //        let data = {
+  //          'csrfmiddlewaretoken':'{{csrf_token}}',
+  //          'qc_duration':qc_duration
+  //        }
+  //        $.ajax({
+  //          type:'POST',
+  //          url:'{% url "traceability:update-duration-view" product_id %}',
+  //          data:data,
+  //        })
+  //        $.ajax({
+  //          type:'GET',
+  //          url:'{% url "traceability:check-traceability-start-view" product_id %}',
+  //          success:function(response){
+  //            if (response['status']===false) {
+  //              alert('QA has ended the traceability')
+  //              window.location.href = '{% url "traceability:welcome-view" %}'
+  //            }
+  //
+  //          }
+  //        })
+  //       }
+  //       timer.innerHTML = curr_time;
+  //     },1000)
+  //     return [curr_time, timerfunc]
+  //   };
+  //
+  //   curr_time = window.onload[0];
+  //   timerfunc = window.onload[1];
+  //
+  //   window.onbeforeunload = function() {
+  //     storage.setItem("timer_qc",curr_time)
+  //   }
+  //
+  //   {% else %}
+  //   window.onload = function() {
+  //     $.ajax({
+  //       type:'GET',
+  //       url:'{% url "traceability:update-duration-view" product_id %}',
+  //       success:function(response){
+  //         console.log(response)
+  //       }
+  //     })
+  //   }
+  //   {% endif %}
+  // </script>
+   <script type="text/javascript">
+  //   {% if emp.dept == 'production' %}
+  //   function stop_timer_prd(e) {
+  //     e.target.disabled=true;
+  //     storage = window.localStorage
+  //     let prd_duration = storage.getItem('timer_prd')
+  //     storage.removeItem('timer_prd')
+  //     storage.removeItem('trace_has_started')
+  //     storage.setItem('stopped','yes')
+  //     let data = {
+  //       'csrfmiddlewaretoken':'{{csrf_token}}',
+  //       'prd_duration':prd_duration,
+  //       'prd_submit':'prd_submit'
+  //     }
+  //     $.ajax({
+  //       type:'POST',
+  //       url:'{% url "traceability:update-duration-view" product_id %}',
+  //       data:data,
+  //       success:function(response){
+  //
+  //       }
+  //     });
+  //     $.ajax({
+  //       type:'POST',
+  //       url :'{% url "traceability:check-traceability-start-view" product_id %}',
+  //       data : data,
+  //       success:function(response){
+  //         alert("Production traceability has finished, redirected to home page")
+  //         window.location.href = '{% url "traceability:welcome-view" %}'
+  //       }
+  //     })
+  //   }
+  //   {% elif emp.dept == 'qc' %}
+  //   function stop_timer_qc(e) {
+  //     e.target.disabled=true;
+  //     storage = window.localStorage
+  //     let qc_duration = storage.getItem('timer_qc')
+  //     storage.removeItem('timer_qc')
+  //     storage.removeItem('trace_has_started')
+  //     storage.setItem('stopped','yes')
+  //     let data = {
+  //       'csrfmiddlewaretoken':'{{csrf_token}}',
+  //       'qc_duration':qc_duration,
+  //       'qc_submit':'qc_submit'
+  //     }
+  //     $.ajax({
+  //       type:'POST',
+  //       url:'{% url "traceability:update-duration-view" product_id %}',
+  //       data:data,
+  //       success:function(response){
+  //
+  //       }
+  //     });
+  //     $.ajax({
+  //       type:'POST',
+  //       url :'{% url "traceability:check-traceability-start-view" product_id %}',
+  //       data : data,
+  //       success:function(response){
+  //         alert("QC traceability has finished, redirected to home page")
+  //         window.location.href = '{% url "traceability:welcome-view" %}'
+  //       }
+  //     })
+  //   }
+  //   {% endif %}
+  // </script>
+   <script type="text/javascript">
+    {% if emp.dept == 'production' %}
+    function add_row(e) {
+      let data = {
+        'new':'new',
+        'csrfmiddlewaretoken':'{{csrf_token}}'
+      };
+      $.ajax({
+        type:'POST',
+        url : "{% url 'traceability:production-qc-view' product_id %}",
+        data:data,
+        success:function(response){
+          location.reload()
+        },
+        error:function(response){
+          alert('oops something wrong happen')
+        },
+      })
+    }
+    {% endif %}
+  // </script>
+
+  <!-- Lanjut disini kaka -->
+
+  <div id="div_table_prd_qc">
+    <table class="table table-sm table-bordered w-auto" style="font-size:12px">
+      <thead>
+        <tr>
+          <td>No</td>
+          <td>Type</td>
+          <td>Code</td>
+          <td>Batch No</td>
+          <td>Prd Date</td>
+          <td>Exp Date</td>
+          <td>Qty</td>
+          <td>QC FS Check</td>
+          <td>QC Halal Check</td>
+          <td>fs attachment</td>
+          <td>halal attachment</td>
+          <td>Action</td>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in rm %}
+          <script type="text/javascript">
+            function edit_row_{{p.id}}(e) {
+              let but_id = document.getElementById(e.target.id)
+              but_id.disabled=true;
+              let disabled_inputs = document.getElementsByClassName('{% if emp.dept == "production" %}input_prd_{{p.id}}{% elif emp.dept == "qc" %}input_qc_{{p.id}}{% endif %}');
+              for (let i = 0; i < disabled_inputs.length; i++) {
+                disabled_inputs[i].disabled = false;
+              }
+              {% if emp.dept == 'qc' %}
+              document.getElementById('qcfs_file_{{p.id}}').disabled = false;
+              document.getElementById('qchalal_file_{{p.id}}').disabled = false;
+              {% endif %}
+            };
+            {% if emp.dept == 'production' %}
+            function delete_row_{{p.id}}(e) {
+              let id = {{p.id}}
+              let data = {
+                'delete':'delete',
+                'p_id' : id,
+                'csrfmiddlewaretoken' : '{{csrf_token}}'
+              }
+              $.ajax({
+                type:'POST',
+                url : "{% url 'traceability:production-qc-view' product_id %}",
+                data:data,
+                success:function(response){
+                  location.reload()
+                },
+                error:function(response){
+                  alert('oops something wrong happen')
+                },
+              })
+            };
+            {% endif %}
+          </script>
+          {% block javascript %}
+          <script type="text/javascript">
+            function rawmat_submit_{{p.id}}(e) {
+            //  let serialized_data = $(e.target).serialize();
+              let formElement = document.getElementById('form_rawmat{{p.id}}');
+              let formData = new FormData(formElement);
+              formData.append('csrfmiddlewaretoken','{{csrf_token}}')
+              formData.append('update','update')
+              console.log(formData)
+              for (var [key, value] of formData.entries()) {
+                console.log(key, value);
+              }
+
+              e.preventDefault();
+              $.ajax({
+                type:'POST',
+                url : "{% url 'traceability:production-qc-view' product_id %}",
+                data: formData,
+                contentType: false, // NEEDED, DON'T OMIT THIS (requires jQuery 1.6+)
+                processData: false, // NEEDED, DON'T OMIT THIS
+                success: function(response){
+                  let disabled_inputs = document.getElementsByClassName('{% if emp.dept == "production" %}input_prd_{{p.id}}{% elif emp.dept == "qc" %}input_qc_{{p.id}}{% endif %}');
+                  for (let i = 0; i < disabled_inputs.length; i++) {
+                    disabled_inputs[i].disabled = true;
+                  }
+                  let but_id = document.getElementById('button_edit_{{p.id}}')
+                  but_id.disabled=false;
+                  {% if emp.dept == 'qc' %}
+                  document.getElementById('qcfs_file_{{p.id}}').disabled = true;
+                  document.getElementById('qchalal_file_{{p.id}}').disabled = true;
+                  {% endif %}
+                  location.reload()
+                  }
+                ,
+                error: function(response){
+                  alert("there is an error in your data format, e.g : wrong date format, using alphabet for numbered inputs, etc");
+                }
+              })
+
+            }
+          </script>
+          {% endblock javascript %}
+          <tr>
+            <form id = "form_rawmat{{p.id}}" action = "" onsubmit="rawmat_submit_{{p.id}}(event)" class="" method="post" enctype="multipart/form-data">
+                  {% csrf_token %}
+
+              <td>
+                <input class="{% if emp.dept == 'production' %}input_prd_{{p.id}}{% elif emp.dept == 'qc' %}input_qc_{{p.id}}{% endif %}" disabled  type="text" name="" style = "width:25px" value="{{forloop.counter}}">
+              </td>
+              <td>
+                <select class="{% if emp.dept == 'production' %}input_prd_{{p.id}}{% elif emp.dept == 'qc' %}input_qc_{{p.id}}{% endif %}" disabled  type="text" name="type_{{p.id}}">
+                  {% if p.type %}
+                  <option selected value="{{p.type}}">{{p.type}}</option>
+                  {% endif %}
+                  <option value="raw material">raw material</option>
+                  <option value="packaging">packaging</option>
+                </select>
+              </td>
+              <td>
+                <input class="{% if emp.dept == 'production' %}input_prd_{{p.id}}{% elif emp.dept == 'qc' %}input_qc_{{p.id}}{% endif %}" disabled  type="text" name="code_{{p.id}}" style = "width:70px" value="{{p.code}}">
+              </td>
+              <td>
+                <input class="{% if emp.dept == 'production' %}input_prd_{{p.id}}{% elif emp.dept == 'qc' %}input_qc_{{p.id}}{% endif %}" disabled  type="text" name="batch_no_{{p.id}}" style = "width:100px" value="{{p.batch_no}}">
+              </td>
+              <td>
+                <input class="{% if emp.dept == 'production' %}input_prd_{{p.id}}{% elif emp.dept == 'qc' %}input_qc_{{p.id}}{% endif %}" disabled type="date" name="prod_date_{{p.id}}" style = "width:120px" value="{{p.prod_date|date:"Y-m-d"}}">
+              </td>
+              <td>
+                <input class="{% if emp.dept == 'production' %}input_prd_{{p.id}}{% elif emp.dept == 'qc' %}input_qc_{{p.id}}{% endif %}" disabled type="date" name="exp_date_{{p.id}}" style = "width:120px" value="{{p.exp_date|date:"Y-m-d"}}">
+              </td>
+              <td>
+                <input class="{% if emp.dept == 'production' %}input_prd_{{p.id}}{% elif emp.dept == 'qc' %}input_qc_{{p.id}}{% endif %}" disabled type="number" step = "any" style = "width:60px" name="qty_{{p.id}}" value="{{p.qty}}">
+              </td>
+              <td class = "td_qc_text">
+                <textarea class="{% if emp.dept == 'production' %}input_prd_{{p.id}}{% elif emp.dept == 'qc' %}input_qc_{{p.id}}{% endif %}" disabled rows="3"  name="qc_fs_{{p.id}}" value="{{p.qc_fs}}">{{p.qc_fs}}</textarea>
+              </td>
+              <td class = "td_qc_text">
+                <textarea class="{% if emp.dept == 'production' %}input_prd_{{p.id}}{% elif emp.dept == 'qc' %}input_qc_{{p.id}}{% endif %}" disabled rows ="3" name="qc_halal_{{p.id}}" value="{{p.qc_halal}}">{{p.qc_halal}}</textarea>
+              </td>
+              <td>
+                {% if emp.dept == 'qc' %}
+                <div class="custom-file">
+                    <input  type="file" class="custom-file-input" id="qcfs_file_{{p.id}}" disabled name="qcfs_atch_{{p.id}}" value="" style = "width:150px" aria-describedby="inputGroupFileAddon01">
+                    <label class="custom-file-label" for="qcfs_file_{{p.id}}">{% if p.qcfs_atch %}{{p.qcfs_atch|filename}}{% else %}Choose file{% endif %}</label>
+                </div>
+                {% else %}
+                QC only
+                {% endif %}
+              </td>
+              <td>
+                {% if emp.dept == 'qc' %}
+                <div class="custom-file">
+                    <input  type="file" class="custom-file-input" id="qchalal_file_{{p.id}}" disabled name="qchalal_atch_{{p.id}}" style = "width:150px" value="" aria-describedby="inputGroupFileAddon01">
+                    <label class="custom-file-label" for="qchalal_file_{{p.id}}">{% if p.qchalal_atch %}{{p.qchalal_atch|filename}}{% else %}Choose file{% endif %}</label>
+                </div>
+                {% else %}
+                QC only
+                {% endif %}
+              </td>
+              <td>
+                <input class="{% if emp.dept == 'production' %}input_prd_{{p.id}}{% elif emp.dept == 'qc' %}input_qc_{{p.id}}{% endif %}" disabled type="submit" name="{% if emp.dept == 'production' %}post_row_prd_{{p.id}}{% elif emp.dept == 'qc' %}post_row_qc_{{p.id}}{% endif %}" value="Post">
+                <button id = "button_edit_{{p.id}}" onclick="edit_row_{{p.id}}(event)" type="button" name="edit_button">Edit</button>
+                <button id = "{% if emp.dept == 'production' %}button_delete_prd_{{p.id}}{% elif emp.dept == 'qc' %}button_delete_qc_{{p.id}}{% endif %}" onclick="delete_row_{{p.id}}(event)" type="button" name="delete_button">Delete</button>
+                <input type="hidden" name="input_prd_qc_hidden" value="{{p.id}}">
+              </td>
+
+            </form>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div style="font-size:small" class="rawmat_duration_div">
+    {% if emp.dept == 'production' %}
+    <h6>Raw Mat TRACEABILITY DURATION - PRD (MINUTES) = <span id='prd_timer'></span>
+      <button id = "stop_timer_prd_button" style="background-color:red" type="button" onclick="stop_timer_prd(event)" name="button">Finish</button>
+    </h6>
+    {% elif emp.dept == 'qc' %}
+    <h6>Raw Mat TRACEABILITY DURATION - QC (MINUTES) = <span id='qc_timer'></span>
+      <button id = "stop_timer_qc_button" style="background-color:red" type="button" onclick="stop_timer_qc(event)" name="button">Finish</button>
+    </h6>
+    {% endif %}
+  </div>
+
+
+
+{% endblock content %}

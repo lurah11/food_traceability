@@ -1,0 +1,281 @@
+{% extends 'traceability/base.html' %}
+
+{% block title %}HCI Traceability Simulation{% endblock title %}
+
+{% block content %}
+{% load filename %}
+{% load minutes %}
+<div style="text-align:right"class="">
+    <a style="border:solid;background-color:yellow" href="" onclick="add_row(event)">Add Data</a>
+  </div>
+  <script type="text/javascript">
+    storage = window.localStorage;
+
+    {% if emp.dept == "warehouse" %}
+    window.onload = function() {
+      $.ajax({
+        type:'GET',
+        url:'{% url "traceability:check-traceability-start-view" product_id %}',
+        success:function(response){
+          if (response['wh_submit'] === true) {
+            alert("the data has been submited :D")
+            document.getElementById('stop_timer_wh_button').disabled = true
+            $.ajax({
+              type:'GET',
+              url : '{% url "traceability:update-duration-view" product_id %}',
+              success: function(response){
+                let timer = document.getElementById('wh_timer')
+                let duration = parseInt(response['wh_duration'])
+                duration_in_min = duration/60
+                timer.innerHTML = duration_in_min
+              },
+              error: function(response){
+                console.log(response)
+              }
+            })
+          }
+          else {
+            let whtimerfunc = window.setInterval(()=>{
+                $.ajax({
+                  type:'GET',
+                  url : '{% url "traceability:update-duration-view" product_id %}',
+                  success:function(response){
+                    let timer = document.getElementById('wh_timer')
+                    let duration = parseInt(response['total_duration'])
+                    duration_in_min = duration/60
+                    timer.innerHTML = duration_in_min
+                },
+                error: function(response){
+                  console.log(response);
+                }})
+                $.ajax({
+                  type:'GET',
+                  url:'{% url "traceability:check-traceability-start-view" product_id %}',
+                  success:function(response){
+                    if (response['status']===false) {
+                      clearInterval(whtimerfunc)
+                      alert('QA has ended the traceability')
+                      window.location.href = '{% url "traceability:welcome-view" %}'
+                    }
+
+                  }
+                })
+            },10000)
+          }
+        }
+      })
+    }
+
+    {% else %}
+    window.onload = function() {
+      $.ajax({
+        type:'GET',
+        url : '{% url "traceability:update-duration-view" product_id %}',
+        success: function(response){
+          let timer = document.getElementById('wh_timer')
+          let duration = parseInt(response['wh_duration'])
+          duration_in_min = duration/60
+          timer.innerHTML = duration_in_min
+        },
+        error: function(response){
+          console.log(response)
+        }
+      })
+    }
+    {% endif %}
+  </script>
+  <script type="text/javascript">
+    function stop_timer_wh(e) {
+      e.target.disabled=true;
+      let data = {
+        'csrfmiddlewaretoken':'{{csrf_token}}',
+        'wh_submit':'wh_submit'
+      }
+      $.ajax({
+        type:'POST',
+        url:'{% url "traceability:update-duration-view" product_id %}',
+        data:data,
+        success:function(response){
+          let timer = document.getElementById('wh_timer')
+          let duration = parseInt(response['wh_duration'])
+          duration_in_min = duration/60
+          timer.innerHTML = duration_in_min
+        }
+      });
+      $.ajax({
+        type:'POST',
+        url :'{% url "traceability:check-traceability-start-view" product_id %}',
+        data : data,
+        success:function(response){
+          alert("WH traceability has finished, redirected to home page")
+          window.location.href = '{% url "traceability:welcome-view" %}'
+        }
+      })
+    }
+  </script>
+  <script type="text/javascript">
+    {% if emp.dept == 'warehouse' %}
+    function add_row(e) {
+      let data = {
+        'new':'new',
+        'csrfmiddlewaretoken':'{{csrf_token}}'
+      };
+      $.ajax({
+        type:'POST',
+        url : "{% url 'traceability:warehouse-ajax-view' product_id %}",
+        data:data,
+        success:function(response){
+          location.reload()
+        },
+        error:function(response){
+          alert('oops something wrong happen')
+        },
+      })
+    }
+    {% endif %}
+  </script>
+  <div class="" id="div_table_warehouse" style="font-size:small">
+    <table class="table table-sm table-bordered">
+      <thead>
+        <tr>
+          <td>No</td>
+          <td>Do Number</td>
+          <td>Date</td>
+          <td>Receiver</td>
+          <td>Destination</td>
+          <td>Address</td>
+          <td>Quantity</td>
+          <td>Attachments</td>
+          <td>Action</td>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in pd%}
+          {% if emp.dept == 'warehouse' %}
+          <script type="text/javascript">
+            function edit_row_{{p.id}}(e) {
+              let but_id = document.getElementById(e.target.id)
+              but_id.disabled=true;
+              let disabled_inputs = document.getElementsByClassName('input_wh_{{p.id}}');
+              for (let i = 0; i < disabled_inputs.length; i++) {
+                disabled_inputs[i].disabled = false;
+              }
+              document.getElementById('wh_file_{{p.id}}').disabled = false;
+            };
+            function delete_row_{{p.id}}(e) {
+              let id = {{p.id}}
+              let data = {
+                'delete':'delete',
+                'p_id' : id,
+                'csrfmiddlewaretoken' : '{{csrf_token}}'
+              }
+              $.ajax({
+                type:'POST',
+                url : "{% url 'traceability:warehouse-ajax-view' product_id %}",
+                data:data,
+                success:function(response){
+                  location.reload()
+                },
+                error:function(response){
+                  alert('oops something wrong happen')
+                },
+              })
+            };
+          </script>
+          {% block javascript %}
+          <script type="text/javascript">
+            function product_delivery_submit_{{p.id}}(e) {
+            //  let serialized_data = $(e.target).serialize();
+              let formElement = document.getElementById('form_product{{p.id}}');
+              let formData = new FormData(formElement);
+              formData.append('csrfmiddlewaretoken','{{csrf_token}}')
+              for (var [key, value] of formData.entries()) {
+                console.log(key, value);
+              }
+              let id = {{p.id}};
+              e.preventDefault();
+              $.ajax({
+                type:'POST',
+                url : "{% url 'traceability:warehouse-ajax-view' product_id %}",
+                data: formData,
+                contentType: false, // NEEDED, DON'T OMIT THIS (requires jQuery 1.6+)
+                processData: false, // NEEDED, DON'T OMIT THIS
+                success: function(response){
+                  let disabled_inputs = document.getElementsByClassName('input_wh_{{p.id}}');
+                  for (let i = 0; i < disabled_inputs.length; i++) {
+                    disabled_inputs[i].disabled = true;
+                  }
+                  let but_id = document.getElementById('button_edit_{{p.id}}')
+                  but_id.disabled=false;
+                  document.getElementById('wh_file_{{p.id}}').disabled = true;
+                  location.reload()
+                  }
+                ,
+                error: function(response){
+                  alert("there is an error in your data format, e.g : wrong date format, using alphabet for numbered inputs, etc");
+                }
+              })
+
+            }
+          </script>
+          {% endblock javascript %}
+          {% endif %}
+          <tr>
+            <form id = "form_product{{p.id}}" action = "" onsubmit="product_delivery_submit_{{p.id}}(event)" class="" method="post" enctype="multipart/form-data">
+                  {% csrf_token %}
+              <td>
+                <input class="input_wh_{{p.id}}" disabled style="width:30px" type="text" name="" value="{{forloop.counter}}">
+              </td>
+              <td>
+                <input class="input_wh_{{p.id}}" disabled style="width:100px" type="text" name="shipment_{{p.id}}" value="{{p.shipment_no}}">
+              </td>
+              <td>
+                <input class="input_wh_{{p.id}}" disabled style="width:125px" type="date" name="date_{{p.id}}" value="{{p.date|date:"Y-m-d"}}">
+              </td>
+              <td>
+                <input class="input_wh_{{p.id}}" disabled style="width:100px" type="text" name="receiver_{{p.id}}" value="{{p.receiver}}">
+              </td>
+              <td>
+                <input class="input_wh_{{p.id}}" disabled type="text" name="destination_{{p.id}}" value="{{p.destination}}">
+              </td>
+              <td>
+                <input class="input_wh_{{p.id}}" disabled type="text" name="address_{{p.id}}" value="{{p.address}}">
+              </td>
+              <td>
+                <input class="input_wh_{{p.id}}" disabled style="width:70px" type="text" name="qty_{{p.id}}" value="{{p.qty}}">
+              </td>
+              <td>
+                <div class="custom-file">
+                    <input type="file" class="custom-file-input" id="wh_file_{{p.id}}" disabled name="record_{{p.id}}" value="{{p.record}}" aria-describedby="inputGroupFileAddon01">
+                    <label class="custom-file-label" for="wh_file_{{p.id}}">{% if p.record %}{{p.record|filename}}{% else %}Choose file{% endif %}</label>
+                </div>
+              </td>
+              <td>
+                <input class="input_wh_{{p.id}}" disabled type="submit" name="post_row_{{p.id}}" value="Post">
+                <button id = "button_edit_{{p.id}}" onclick=edit_row_{{p.id}}(event) type="button" name="button">Edit</button>
+                <button id = "button_delete_{{p.id}}" onclick=delete_row_{{p.id}}(event) type="button" name="button">Delete</button>
+                <input type="hidden" name="input_wh_hidden" value="{{p.id}}">
+              </td>
+            </form>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div style="font-size:small" class="fg_balance_div">
+    <h5>Product Balance ( in boxes ) - Automatic Calculation : </h5>
+    <p>1. Total Produced Qty= <span id = "tpq" style="color:blue">{{product.qty_produced}}</span></p>
+    <p>2. On-Hold Qty= <span id ="ohq" style="color:blue">{{product.qty_onhold}}</span> </p>
+    <p>3. Released Qty= <span id = "rq" style="color:blue">{{product.qty_released}}</span></p>
+    <p>4. Actual Stored Qty= <span id = "asq" style="color:blue">{{product.qty_stored}}</span></p>
+    <p>5. Calculated Stored Qty= <span id style = "color:blue" id = "dq">{{calc_stored}}</span> </p>
+    <p>6. Delivered Qty= <span id style = "color:blue" id = "dq">{{product.qty_delivered}}</span> </p>
+    <p>7. Differences  = <span style = "color:red;background-color:yellow" id="diff">{{product.qty_diff}}</span> </p>
+    <h6>FG TRACEABILITY DURATION (MINUTES) = <span id='wh_timer'></span>
+      <button id = "stop_timer_wh_button" style="background-color:red" type="button" onclick="stop_timer_wh(event)" name="button">Finish</button>
+    </h6>
+  </div>
+
+
+
+{% endblock content %}

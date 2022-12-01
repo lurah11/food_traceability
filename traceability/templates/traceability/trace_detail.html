@@ -1,0 +1,310 @@
+{% extends 'traceability/base.html' %}
+
+{% block title %}HCI Traceability Simulation{% endblock title %}
+
+{% block content %}
+   <p>Traceability Data Detail</p>
+   <script type="text/javascript">
+     let storage = window.localStorage;
+     window.onload = function () { // belum ditambahkan untuk link yang lain
+     //   if (storage.getItem('trace_start')==='yes') {
+     //     const traceability_links = $('.traceability_link')
+     //     for(let i = 0 ; i < traceability_links.length ; i++) {
+     //       traceability_links[i].style['background-color'] = 'blue'
+     //     $('#link_wh').attr("href","{% url 'traceability:warehouse-view' t.id %}");
+     //   }
+     // }
+     $.ajax({
+       type:'GET',
+       url : '{% url "traceability:check-traceability-start-view" t.id %}',
+       success: function(response) {
+         console.log(response)
+         if (response['status'] === true ) {
+           document.getElementById('button_start_traceability_click').disabled = true
+           document.getElementById('button_start_traceability_click').style = "color:black"
+           document.getElementById('button_end_traceability_click').disabled = false
+           document.getElementById('button_end_traceability_click').style= "background-color:blue;color:white"
+           const traceability_links = $('.traceability_link')
+           for(let i = 0 ; i < traceability_links.length ; i++) {
+             if (traceability_links[i]===document.getElementById('link_wh')) {
+               if (response['wh_submit']===false) {
+                 traceability_links[i].style['background-color'] = 'blue'
+                 $('#link_wh').attr("href","{% url 'traceability:warehouse-view' t.id %}");
+               }
+               else {
+                 traceability_links[i].style['background-color'] = 'red'
+                 $('#link_wh').attr("href","{% url 'traceability:warehouse-view' t.id %}")
+                // $('#link_wh').attr("href","");
+               }
+             }
+             else if (traceability_links[i]===document.getElementById('link_production')) {
+               if (response['prd_submit']===false) {
+                 traceability_links[i].style['background-color'] = 'blue'
+                $('#link_production').attr("href","{% url 'traceability:production-qc-view' t.id %}");
+               }
+               else {
+                 traceability_links[i].style['background-color'] = 'red'
+                 $('#link_production').attr("href","{% url 'traceability:production-qc-view' t.id %}");
+                 // $('#link_production').attr("href","");
+               }
+             }
+             else if (traceability_links[i]===document.getElementById('link_qc')) {
+               if (response['qc_submit']===false) {
+                 traceability_links[i].style['background-color'] = 'blue'
+                $('#link_qc').attr("href","{% url 'traceability:production-qc-view' t.id %}");
+               }
+               else {
+                 traceability_links[i].style['background-color'] = 'red'
+                 $('#link_qc').attr("href","{% url 'traceability:production-qc-view' t.id %}");
+                 // $('#link_qc').attr("href","");
+               }
+             }
+             else {
+                   traceability_links[i].style['background-color'] = 'blue'
+                   $('#link_report').attr("href","{% url 'traceability:report-view' t.id %}");
+             }
+
+             }
+
+
+           let timerfunc = window.setInterval(()=>{
+             $.ajax({
+               type:'GET',
+               url:'{% url "traceability:update-duration-view" t.id %}',
+               success:function(response){
+                 let duration = parseInt(response['total_duration'])
+                 let duration_in_min = duration/60
+                 document.getElementById('traceability_total_duration').innerHTML = duration_in_min
+                 document.getElementById('duration_in_second').innerHTML = duration
+               }
+             })
+             $.ajax({
+               type:'POST',
+               url:'{% url "traceability:update-duration-view" t.id %}',
+               data: {'csrfmiddlewaretoken':'{{csrf_token}}'},
+               success:function(response){
+                 console.log(response)
+                 let duration = parseInt(response['total_duration'])
+                 let duration_in_min = duration/60
+                 document.getElementById('traceability_total_duration').innerHTML = duration_in_min
+                 document.getElementById('duration_in_second').innerHTML = duration
+               },
+               error:function(response){
+                 console.log(response)
+               }
+             })
+           },10000);
+           console.log(timerfunc)
+       //     $.ajax({
+       //       type:'GET',
+       //       url : '{% url "traceability:check-traceability-start-view" t.id %}',
+       //       success:function(response){
+       //         if (response['status'] === false ) {
+       //           console.log(response);
+       //           clearInterval(timerfunc)
+       //         }
+       //       },
+       //       error:function(response){
+       //         console.log(response);
+       //       }
+       //   })
+       // }
+     }
+         else if (response['status'] === false) {
+           console.log("bila agus bukan jalanmu")
+           console.log(window.timerfunc)
+           clearInterval(window.timerfunc)
+           document.getElementById('button_start_traceability_click').disabled = false
+           document.getElementById('button_end_traceability_click').disabled = true
+           document.getElementById('button_start_traceability_click').style = "background-color:blue;color:white"
+           document.getElementById('button_end_traceability_click').style = "color:black"
+
+           const traceability_links = $('.traceability_link')
+           for(let i = 0 ; i < traceability_links.length ; i++) {
+             if (traceability_links[i] === document.getElementById('link_report')) {
+               traceability_links[i].style['background-color'] = 'blue'
+               $('#link_report').attr("href","{% url 'traceability:report-view' t.id %}");
+             }
+             else {
+               traceability_links[i].style['background-color'] = 'red'
+               traceability_links[i].href=""
+             }
+
+
+           }
+         }
+       },
+
+       error : function(response){
+         console.log(response);
+       }
+     })
+
+      $.ajax({
+        type:'GET',
+        url:'{% url "traceability:update-duration-view" t.id %}',
+        success:function(response){
+          let duration = parseInt(response['total_duration'])
+          let duration_in_min = duration/60
+          document.getElementById('traceability_total_duration').innerHTML = duration_in_min
+          document.getElementById('duration_in_second').innerHTML = duration
+        }
+      })
+     }
+
+
+
+     function end_traceability_click(e){ // belum ditambahkan untuk link yang lain : baru link_wh
+       data = {
+         'button':'end',
+         'csrfmiddlewaretoken':'{{csrf_token}}'
+       }
+       document.getElementById('button_start_traceability_click').disabled = false
+       document.getElementById('button_start_traceability_click').style = "background-color:blue;color:white"
+       document.getElementById('button_end_traceability_click').disabled = true;
+       document.getElementById('button_end_traceability_click').style = "color:black"
+       $.ajax({
+         type:'POST',
+         url:'{% url "traceability:check-traceability-start-view" t.id %}',
+         data:data,
+         success:function(response){
+           console.log(response)
+           if (response['status']===false) {
+             const traceability_links = $('.traceability_link')
+             for(let i = 0 ; i < traceability_links.length ; i++) {
+               if (traceability_links[i] === document.getElementById('link_report')) {
+                 traceability_links[i].style['background-color'] = 'blue'
+                 $('#link_report').attr("href","{% url 'traceability:report-view' t.id %}");
+               }
+               else {
+                 traceability_links[i].style['background-color'] = 'red'
+                 traceability_links[i].href=""
+               }
+
+             }
+           }
+         },
+         error:function(response){
+           console.log(response)
+         }
+       });
+       $.ajax({
+         type:'POST',
+         url:'{% url "traceability:update-duration-view" t.id %}',
+         data: data,
+         success:function(response){
+           let duration = parseInt(response['total_duration'])
+           let duration_in_min = duration/60
+           document.getElementById('ongoing_duration').innerHTML = "Final Duration (in minutes)"
+           document.getElementById('traceability_total_duration').innerHTML = duration_in_min
+           document.getElementById('duration_in_second').innerHTML = duration
+           location.reload()
+         }
+       })
+     };
+
+     function start_traceability_click(e){ // belum ditambahkan untuk link yang lain : baru link_wh
+       data = {
+         'button':'start',
+         'csrfmiddlewaretoken':'{{csrf_token}}'
+       }
+       document.getElementById('button_start_traceability_click').disabled = true
+       document.getElementById('button_start_traceability_click').style = "color:black"
+       document.getElementById('button_end_traceability_click').disabled = false;
+       document.getElementById('button_end_traceability_click').style = "background-color:blue;color:white"
+       $.ajax({
+         type:'POST',
+         url:'{% url "traceability:check-traceability-start-view" t.id %}',
+         data : data,
+         success:function(response){
+           if (response['status']===true) {
+             const traceability_links = $('.traceability_link')
+             for(let i = 0 ; i < traceability_links.length ; i++) {
+               traceability_links[i].style['background-color'] = 'blue'
+             }
+             $('#link_wh').attr("href","{% url 'traceability:warehouse-view' t.id %}");
+             $('#link_qc').attr("href","{% url 'traceability:production-qc-view' t.id %}");
+             $('#link_production').attr("href","{% url 'traceability:production-qc-view' t.id %}");
+           }
+         },
+         error:function(response){
+           console.log(response)
+         }
+       });
+       $.ajax({
+         type:'POST',
+         url :'{% url "traceability:update-duration-view" t.id %}',
+         data: data,
+         success: function(response){
+           console.log("MULLLLLAAAIKAKAKA")
+           location.reload()
+         },
+         error:function(response){
+           console.log(response)
+         }
+       })
+     }
+   </script>
+   <table class="table table-striped">
+    <tbody>
+      <tr>
+        <td>Name</td>
+        <td>{{t.name}}</td>
+      </tr>
+      <tr>
+        <td>Customer</td>
+        <td>{{t.customer}}</td>
+      </tr>
+      <tr>
+        <td>Volume(mL)</td>
+        <td>{{t.volume}}</td>
+      </tr>
+      <tr>
+        <td>Cycle Begin</td>
+        <td>{{t.cycle_begin}}</td>
+      </tr>
+      <tr>
+        <td>Cycle End</td>
+        <td>{{t.cycle_end}}</td>
+      </tr>
+      <tr>
+        <td>Date of Traceability</td>
+        <td>{{t.traceability_date}}</td>
+      </tr>
+      <tr>
+        <td>Result</td>
+        <td>{{t.result}}</td>
+      </tr>
+      <tr>
+        <td>Duration (in seconds)</td>
+        <td><span id = "duration_in_second"></span></td>
+      </tr>
+      <tr>
+        <td id = 'ongoing_duration'>Ongoing Duration (minutes)</td>
+        <td><span id='traceability_total_duration'></span></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="">
+      <button id="button_start_traceability_click" onclick="start_traceability_click(event)" style="background-color:blue;color:white" type="button" name="button">Start Traceability</button>
+      <button id="button_end_traceability_click" onclick="end_traceability_click(event)" style="background-color:red;color:white" type="button" name="button">End Traceability</button>
+  </div>
+
+  <p style="color:black;background-color:yellow">Only QA can start and End traceability, the links below will be turned to <span style="color:blue">blue</span> if traceability has started </p>
+  <div id="trace_detail_links" style = "display:inline">
+    <a class="traceability_link" id = "link_report" href="" style="border-style:solid;margin:35px 70px 200px 90px; background-color:red; color:white">Report</a>
+    <a class="traceability_link" id ="link_qc" href="" style="border-style:solid;margin:35px 70px 200px 90px; background-color:red ; color:white">QC</a>
+    <a class="traceability_link" id = "link_production" href="" style="border-style:solid;margin:35px 70px 200px 90px; background-color:red ; color:white">Production</a>
+    <a class="traceability_link" id = "link_wh" href="" style="border-style:solid;margin:35px 70px 200px 90px; background-color:red ; color:white">Warehouse</a>
+  </div>
+  <!-- <form class="" action="" method="post">
+    <input type="hidden" name="report_duration" value="report">
+    <input type="hidden" name="qc_duration" value="qc">
+    <input type="hidden" name="pd_duration" value="production">
+    <input type="hidden" name="wh_duration" value="warehouse">
+    <input type="submit" name="" value="report">
+    <input type="submit" name="" value="qc">
+    <input type="submit" name="" value="production">
+    <input type="submit" name="" value="warehouse">
+  </form> -->
+{% endblock content %}

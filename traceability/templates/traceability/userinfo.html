@@ -1,0 +1,45 @@
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <style>
+      #user_greeting {
+        color:blue;
+        font-family:cursive;
+        text-align: right;
+
+      }
+      #hci{
+        font-family: cursive;
+        color : green;
+        text-align: center;
+      }
+      .greeting em {
+        color : blue;
+        font-style: italic;
+        text-decoration: underline;
+      }
+      #logout {
+        color : red;
+        text-decoration: underline;
+        text-align: right;
+      }
+    </style>
+  </head>
+  <body>
+    
+
+    {% if user.is_authenticated %}
+      <div id = "user_greeting">
+        <p id = "user_greeting_para" class = "greeting"> Hi : <em> {{user.username}} </em> </p>
+        <a id = "logout" href = "{% url 'traceability:logout-view' %}"> Logout </a>
+        <a href="{% url 'traceability:welcome-view' %}">Home</a>
+      </div>
+    {% else %}
+      <p style = "text-align : right;"> This web application is developed by QA Team PT HCI <p>
+    {% endif %}
+  </body>
+</html>

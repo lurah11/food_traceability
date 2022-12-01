@@ -1,0 +1,132 @@
+{% extends 'traceability/base.html' %}
+
+{% block title %}HCI Traceability Simulation{% endblock title %}
+
+{% block content %}
+{% load minutes %}
+
+<h1>TRACEABILITY REPORT </h1>
+<div style="display:inline-block">
+  <div>
+    <form class="" action="{% url 'traceability:html-report-view' product.id %}" method="get">
+      <input style="background-color:green;color:white" type="submit" name="submit_generate_report_1" value="Generate Official Report For Brand Owner">
+      <input type="hidden" name="brand_owner" value="yes">
+    </form>
+  </div>
+  <div>
+    <form class="" action="{% url 'traceability:html-report-view' product.id %}" method="get">
+      <input style="background-color:brown;color:white" type="submit" name="submit_generate_report_2" value="Generate Official Report For Other Customer">
+      <input type="hidden" name="other_customer" value="yes">
+    </form>
+  </div>
+</div>
+
+
+<script type="text/javascript">
+  window.onload = function() {
+    {% if emp.dept == 'qa' %}
+    let input_result =  document.getElementById('button_result_qa')
+    let input_summary = document.getElementById('button_summary_qa')
+    input_result.disabled = false
+    input_summary.disabled = false
+    {% endif %}
+  }
+
+  function input_result(e) {
+    e.target.disabled = true
+    document.getElementById('input_text_result_qa').disabled = false
+  }
+
+  function input_summary(e){
+    e.target.disabled = true
+    document.getElementById('input_text_summary_qa').disabled = false
+  }
+
+</script>
+<form class="" action="{% url 'traceability:report-view' product.id %}" method="post">
+  {% csrf_token %}
+<table class="table table-striped">
+  <tbody>
+
+      <tr>
+        <td>Name<td>
+        <td>{{product.name}}</td>
+      </tr>
+      <tr>
+        <td>Customer<td>
+        <td>{{product.customer}}</td>
+      </tr>
+      <tr>
+        <td>Volume<td>
+        <td>{{product.volume}}</td>
+      </tr>
+      <tr>
+        <td>Cycle Begin<td>
+        <td>{{product.cycle_begin}}</td>
+      </tr>
+      <tr>
+        <td>Cycle End<td>
+        <td>{{product.cycle_end}}</td>
+      </tr>
+      <tr>
+        <td>Traceability Date<td>
+        <td>{{product.traceability_date}}</td>
+      </tr>
+      <tr>
+        <td>Produced Quantity (in Boxes)<td>
+        <td>{{product.qty_produced}}</td>
+      </tr>
+      <tr>
+        <td>Released Quantity (in Boxes)<td>
+        <td>{{product.qty_released}}</td>
+      </tr>
+      <tr>
+        <td>On-Hold Quantity (in Boxes)<td>
+        <td>{{product.qty_onhold}}</td>
+      </tr>
+      <tr>
+        <td>Delivered Quantity (in Boxes)<td>
+        <td>{{product.qty_delivered}}</td>
+      </tr>
+      <tr>
+        <td>Stored Quantity (in Boxes)<td>
+        <td>{{product.qty_stored}}</td>
+      </tr>
+      <tr>
+        <td>Difference (in Boxes)<td>
+        <td>{{product.qty_diff}}</td>
+      </tr>
+      <tr>
+        <td style="color:blue">Result<td>
+        <td><input id = "input_text_result_qa" type="text" name="result" disabled value="{{product.result}}"> <button disabled onclick="input_result(event)" type="button" id = "button_result_qa" name="button_result">Edit</button></td>
+      </tr>
+      <tr>
+        <tr>
+          <td style="color:blue">Summary<td>
+          <td><textarea style="white-space: pre-wrap" id= "input_text_summary_qa" name="summary" disabled rows="10" cols = "100">{{product.summary}}</textarea> <button disabled onclick="input_summary(event)" type="button" id = "button_summary_qa" name="button_summary">Edit</button></td>
+        </tr>
+        <tr>
+        <td>Warehouse Duration (in minutes)<td>
+        <td>{{product.wh_duration|minutes}}</td>
+      </tr>
+      <tr>
+        <td>Production Duration (in minutes) <td>
+        <td>{{product.pd_duration|minutes}}</td>
+      </tr>
+      <tr>
+        <td>QC Duration (in minutes)<td>
+        <td>{{product.qc_duration|minutes}}</td>
+      </tr>
+      <tr>
+        <td>Total Traceabilty Duration (in minutes) <td>
+        <td>{{product.duration|minutes}}</td>
+      </tr>
+
+  </tbody>
+
+  </table>
+ <input {% if emp.dept != "qa" %} disabled {% endif %} type="submit" name="submit_report_qa" style = "background-color:blue;color:white" value="Submit Da Report">
+</form>
+
+
+{% endblock content %}
